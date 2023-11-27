@@ -40,7 +40,6 @@ const markerData: Place[] = [
 
 const MapComponent: React.FC = () => {
     // Define the Google Maps API key
-    const YOUR_API_KEY = "AIzaSyCYT5U2bjcBd_bLJ_VVHQW9lvgvPgmmSQM";
 
     useEffect(() => {
         if (window.google && window.google.maps) {
@@ -61,6 +60,16 @@ const MapComponent: React.FC = () => {
 
         let currentInfoWindow: google.maps.InfoWindow | null = null;
 
+        // Function to close the info window
+        const closeInfoWindow = () => {
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+                currentInfoWindow = null;
+            }
+        };
+
+        // Add click event listener to the map to close the info window
+        map.addListener('click', closeInfoWindow);
 
         // Fetch data from the Places API
         markerData.forEach((place: Place) => {
@@ -76,27 +85,31 @@ const MapComponent: React.FC = () => {
             // Add custom info window
             if (title || photo) {
                 const infoWindowContent = `
-                    <div>
-                        ${title ? `<h3>${title}</h3>` : ''}
-                        ${photo ? `<img src="${photo}" alt="Place Photo" style="max-width: 100%;" />` : ''}
-                    </div>
-                `;
+                <div>
+                    ${title ? `<h3>${title}</h3>` : ''}
+                    ${photo ? `<img src="${photo}" alt="Place Photo" style="max-width: auto; Height:40vh" />` : ''}
+                </div>
+            `;
                 const infoWindow = new window.google.maps.InfoWindow({
                     content: infoWindowContent,
                 });
 
                 marker.addListener('click', () => {
-                    if (currentInfoWindow) {
-                        currentInfoWindow.close();
-                    }
+                    closeInfoWindow(); // Close any open info window
 
                     infoWindow.open(map, marker);
                     currentInfoWindow = infoWindow;
-
                 });
             }
         });
+
+        // Cleanup: remove click event listener when the component is unmounted
+        return () => {
+            window.google.maps.event.clearListeners(map, 'click');
+        };
+
     }, []);
+
 
 
     return <div id="map" style={{ height: '100vh', width: '100%' }} />;
